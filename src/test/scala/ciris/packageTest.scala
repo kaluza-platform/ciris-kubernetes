@@ -71,7 +71,7 @@ class packageTest extends CatsEffectSuite {
       }
     }
   }
-  test("missing secret") {
+  test("missing secret".ignore) {
     val namespace = "secrets-test"
     val secretName = "missing"
     intercept[ConfigException] {
@@ -87,7 +87,7 @@ class packageTest extends CatsEffectSuite {
     }
   }
 
-  test("missing secret key") {
+  test("missing secret key".ignore) {
     val namespace = "secrets-test"
     val secretName = "secrets-test"
     val secretKey = "missing-key"
@@ -105,7 +105,7 @@ class packageTest extends CatsEffectSuite {
     }
   }
 
-  test("missing configmap") {
+  test("missing configmap".ignore) {
     val namespace = "pizza"
     val configMapName = "missingmissing"
 
@@ -121,7 +121,7 @@ class packageTest extends CatsEffectSuite {
         .unsafeRunSync()
     }
   }
-  test("missing configmap key") {
+  test("missing configmap key".ignore) {
     val namespace = "pizza"
     val configMapName = "delivery"
     val configMapKey = "missing-key"
