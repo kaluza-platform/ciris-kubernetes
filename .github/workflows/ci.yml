@@ -1,13 +1,32 @@
-name: Compile
+name: CI
 
 on:
   pull_request:
+  push:
+    branches:
+      - master
+      - ciris-1.x
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: olafurpg/setup-scala@v10
-    - name: Compile
-      run: sbt +compile
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: "11"
+          distribution: "temurin"
+          cache: sbt
+
+      - uses: sbt/setup-sbt@v1
+
+      - name: Check formatting
+        run: sbt scalafmtCheckAll scalafmtSbtCheck
+
+      - name: Compile
+        run: sbt +compile
+
+      - name: Test
+        run: sbt +test
