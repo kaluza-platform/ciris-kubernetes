@@ -1,6 +1,7 @@
 package ciris.kubernetes
 
 import cats.effect.IO
+import cats.implicits._
 import ciris._
 import munit.CatsEffectSuite
 
@@ -40,6 +41,108 @@ class KubernetesConfigSpec extends CatsEffectSuite {
     assertEquals(expectedToStringPattern, "ConfigMapInNamespace(my-namespace)")
   }
 
-  // Note: Full integration tests would require a Kubernetes cluster or testcontainers with k3s
-  // These tests verify the API surface and basic construction without network calls
+  // ============================================================================
+  // Integration tests - require a running Kubernetes cluster
+  // Mark as .ignore when running in CI without a cluster
+  // ============================================================================
+
+  test("secrets integration".ignore) {
+    final case class Config(
+      appName: String,
+      apiKey: Secret[String],
+      username: String,
+      timeout: Int
+    )
+
+    secretInNamespace[IO]("secrets-test")
+      .flatMap { secret =>
+        (
+          secret("apikey").secret,
+          secret("username"),
+          secret("defaults", "timeout").as[Int]
+        ).parMapN { (apiKey, username, timeout) =>
+          Config(
+            appName = "my-api",
+            apiKey = apiKey,
+            username = username,
+            timeout = timeout
+          )
+        }
+      }
+      .load[IO]
+      .map { config =>
+        val expected = Config("my-api", Secret("dummykey"), "dummyuser", 10)
+        assertEquals(config, expected)
+      }
+  }
+
+  test("configmaps integration".ignore) {
+    final case class Config(
+      appName: String,
+      pizzaBrand: String,
+      deliveryRadius: Int,
+      isDeliveryCharge: Boolean
+    )
+
+    configMapInNamespace[IO]("pizza")
+      .flatMap { configMap =>
+        (
+          configMap("pizzabrand"),
+          configMap("delivery", "radius").as[Int],
+          configMap("delivery", "charge").as[Boolean]
+        ).parMapN { (pizzaBrand, deliveryRadius, isDeliveryCharge) =>
+          Config(
+            appName = "my-pizza-api",
+            pizzaBrand = pizzaBrand,
+            deliveryRadius = deliveryRadius,
+            isDeliveryCharge = isDeliveryCharge
+          )
+        }
+      }
+      .load[IO]
+      .map { config =>
+        val expected = Config("my-pizza-api", "domino", 5, true)
+        assertEquals(config, expected)
+      }
+  }
+
+  test("missing secret returns ConfigException".ignore) {
+    interceptIO[ConfigException] {
+      secretInNamespace[IO]("secrets-test")
+        .flatMap { secret =>
+          secret("missing").as[String]
+        }
+        .load[IO]
+    }
+  }
+
+  test("missing secret key returns ConfigException".ignore) {
+    interceptIO[ConfigException] {
+      secretInNamespace[IO]("secrets-test")
+        .flatMap { secret =>
+          secret("secrets-test", "missing-key").as[String]
+        }
+        .load[IO]
+    }
+  }
+
+  test("missing configmap returns ConfigException".ignore) {
+    interceptIO[ConfigException] {
+      configMapInNamespace[IO]("pizza")
+        .flatMap { configMap =>
+          configMap("missingmissing").as[String]
+        }
+        .load[IO]
+    }
+  }
+
+  test("missing configmap key returns ConfigException".ignore) {
+    interceptIO[ConfigException] {
+      configMapInNamespace[IO]("pizza")
+        .flatMap { configMap =>
+          configMap("delivery", "missing-key").as[String]
+        }
+        .load[IO]
+    }
+  }
 }
