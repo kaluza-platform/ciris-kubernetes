@@ -14,8 +14,8 @@ lazy val metadataSettings = Seq(
 )
 
 lazy val scalaSettings = Seq(
-  scalaVersion := "2.13.10",
-  crossScalaVersions := Seq(scalaVersion.value, "2.12.17"),
+  scalaVersion := "2.13.16",
+  crossScalaVersions := Seq(scalaVersion.value, "2.12.20"),
   scalacOptions ++= {
     val commonScalacOptions =
       Seq(
@@ -48,7 +48,9 @@ lazy val scalaSettings = Seq(
 libraryDependencies ++= Seq(
   "io.kubernetes" % "client-java" % "17.0.0",
   "io.kubernetes" % "client-java-api" % "17.0.0",
-  "is.cir" %% "ciris" % "2.4.0"
+  "is.cir" %% "ciris" % "2.4.0",
+  "org.scalameta" %% "munit" % "1.0.3" % Test,
+  "org.typelevel" %% "munit-cats-effect" % "2.0.0" % Test
 )
 
 licenses += ("MIT", url("https://opensource.org/licenses/MIT"))

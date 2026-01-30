@@ -111,6 +111,54 @@ object Main extends IOApp {
 
 ### Development
 
+#### Running Tests
+
+Unit tests can be run without any external dependencies:
+
+```bash
+sbt +test
+```
+
+#### Running Integration Tests
+
+The integration tests are marked as ignored by default because they require a running Kubernetes cluster. To run them locally:
+
+1. **Start a local Kubernetes cluster** (e.g., using [Colima](https://github.com/abiosoft/colima)):
+
+   ```bash
+   colima start --kubernetes
+   ```
+
+2. **Create the test fixtures**:
+
+   ```bash
+   # Create namespaces
+   kubectl create namespace secrets-test
+   kubectl create namespace pizza
+
+   # Create secrets for the secrets test
+   kubectl create secret generic apikey --from-literal=apikey=dummykey -n secrets-test
+   kubectl create secret generic username --from-literal=username=dummyuser -n secrets-test
+   kubectl create secret generic defaults --from-literal=timeout=10 -n secrets-test
+   kubectl create secret generic secrets-test --from-literal=somekey=somevalue -n secrets-test
+
+   # Create configmaps for the configmaps test
+   kubectl create configmap pizzabrand --from-literal=pizzabrand=domino -n pizza
+   kubectl create configmap delivery --from-literal=radius=5 --from-literal=charge=true -n pizza
+   ```
+
+3. **Enable the integration tests** by removing `.ignore` from the test names in the test file, then run:
+
+   ```bash
+   sbt +test
+   ```
+
+4. **Clean up** when done:
+
+   ```bash
+   kubectl delete namespace secrets-test pizza
+   ```
+
 #### Publishing
 In order to publish a new release, Artifactory credentials must be provided. We publish using the rac team account, which results in the artifact being released to the [public repo](https://kaluza.jfrog.io/artifactory/maven/com/ovoenergy/ciris-kubernetes_2.13).
 
